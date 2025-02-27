@@ -29,8 +29,8 @@ docker run -it jmayank/sentence-transformer-mtl
 1.  **Clone the repository:**
 
     ```bash
-    git clone <repository_url>
-    cd sentence-transformer-mtl
+    git clone https://github.com/jmayank23/sentence-transformers-mtl.git
+    cd sentence-transformers-mtl
     ```
 
 2.  **Create a virtual environment:**
