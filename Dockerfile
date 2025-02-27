@@ -10,9 +10,9 @@ COPY . /app
 # Install the required Python packages
 RUN pip install --no-cache-dir -r requirements.txt
 
-# (Optional) Pre-download the model to avoid downloading it every time
-#  This can significantly speed up container startup.  We'll run task 1,
-#  which will download the bert-base-uncased model.
+# Pre-download the model to avoid downloading it every time
+# This can significantly speed up container startup.  We'll run task 1,
+# which will download the bert-base-uncased model.
 RUN python -m src.task1.sentence_transformer
 
 # Set environment variable to prevent needing to download the model again
