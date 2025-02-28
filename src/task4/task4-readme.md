@@ -1,6 +1,6 @@
 # Task 4
 
-This task extends the SentenceTransformer MTL model from Task 2 by providing a **multi-task training loop**. Here, we show how two tasks (e.g., Task A with 5 classes, Task B with 3 classes) can be trained simultaneously using a shared transformer encoder.
+This task extends the SentenceTransformer MTL model from Task 2 by providing a **multi-task training loop** for simultaneously training on two tasks (e.g., Task A with 5 classes, Task B with 3 classes) using a shared transformer encoder.
 
 ---
 
@@ -14,7 +14,7 @@ This task extends the SentenceTransformer MTL model from Task 2 by providing a *
 
 ---
 
-## Key Features
+## Key Components
 
 1. **Handling Hypothetical Data:** `DummyMTLDataset`  
    - Yields random `input_ids`, `attention_mask`, and labels (`labelA`, `labelB`).  
@@ -35,14 +35,14 @@ This task extends the SentenceTransformer MTL model from Task 2 by providing a *
    - **Metrics**: Accuracy may not be the best metric to track if there is class imbalance. 
       - F1 Score would be better as it balances precision and recall, preventing models from achieving high accuracy by simply predicting the majority class
       - Unlike accuracy, F1 score accounts for both false positives and false negatives, making it more robust for uneven class distributions
-   - Device management: Current code assumed CPU-only. If GPU is available, perform `.to(device)` to move model and data to the GPU for training, and then optionally move back to CPU for loss and metric computation.
+   - Device management: Current code assumed CPU-only. If GPU is available, perform `.to(device)` to move model and data to the GPU for training.
 
 ---
 
 ## Multi-Task Training Dynamics
 
 ### Task Interference and Balance
-Training multiple tasks simultaneously introduces several challenges that our implementation addresses:
+Training multiple tasks simultaneously introduces several challenges which would have to be addressed in a scenario with real data, below is a discussion on some of these challenges.
 
 1. **Task Competition and Interference**
    - **Challenge**: Tasks may compete for model capacity or even work against each other
@@ -58,14 +58,16 @@ Training multiple tasks simultaneously introduces several challenges that our im
 
 2. **Convergence Rate Differences**
    - **Challenge**: Tasks typically learn at different speeds
-     - Task B (sentiment) may converge faster than the more complex Task A
-     - Early training might favor easier tasks
-   - **Implementation Approach**: Current implementation:
-     - Uses a single optimizer and learning rate for all tasks
-     - Monitors both tasks' metrics to detect imbalanced learning
+     - Task B (for example, sentiment analysis) may converge faster than the more complex Task A (for example, a 5-class classification)
+     - Early stages of training might favor easier tasks
+   - **Implementation Approach**:
+     - A single optimizer and learning rate has been used for both tasks
+     - Metrics for both tasks are tracked to detect imbalanced learning
    - **Mitigation Strategies**:
      - Task-specific learning rate scheduling
-     - Curriculum learning (gradually increasing difficult tasks' importance)
+     - Curriculum learning (gradually increasing difficult tasks' importance). Can be done by
+         - Implementing a weighted loss 
+         - Sampling some examples more frequently
 
 3. **Training Stability**
    - **Challenge**: Multi-task models can be more unstable during training
@@ -74,38 +76,37 @@ Training multiple tasks simultaneously introduces several challenges that our im
    - **Implementation Considerations**:
      - Adam optimizer was chosen because it allows adaptive learning rates across parameters
      - Training loop tracks metrics for both tasks to monitor stability
-     - Small learning rate (1e-4) chosen to reduce potential oscillations
 
 4. **Gradient Conflicts**
    - **Challenge**: Updates that help one task might harm another
-   - **Current Implementation**: Accepts gradient conflicts as a natural part of MTL
    - **Mitigation Strategies**:
      - Normalize gradient magnitudes
      - Explore more strategies thorough a literature search 
 
-These considerations informed our implementation choices while highlighting potential extensions for more sophisticated multi-task training approaches.
+These considerations inform the implementation choices while highlighting potential extensions for more sophisticated multi-task training approaches.
+
 ---
 
 ## Write up on Key Decisions and Insights
 ### Key Decisions
 - Strategy related to metrics:
-      - Implemented simple loss summation as baseline approach
-      - Acknowledged limitations and proposed weighted alternatives
-      - Designed training loop to track task-specific metrics separately
+   - Implemented simple loss summation as baseline approach
+   - Acknowledged limitations and proposed weighted alternatives
+   - Designed training loop to track task-specific metrics separately
 
 - Optimizer Selection:
-      - Chose Adam optimizer for adaptive learning rates
-      - Used conservative learning rate (1e-4) to ensure some training stability
-      - Suggested task-specific learning rates as a potential improvement
+   - Chose Adam optimizer for adaptive learning rates
+   - Used conservative learning rate (1e-4) to ensure some training stability
+   - Suggested task-specific learning rates as a potential improvement
 - Evaluation Approach:
-      - Performed separate accuracy tracking for each task
-      - Used combined loss as overall training signal and acknowledged potential challenges from gradient interference in a multi task training setting
-      - Recognized limitations of accuracy for imbalanced datasets
+   - Performed separate accuracy tracking for each task
+   - Used combined loss as overall training signal and acknowledged potential challenges from gradient interference in a multi task training setting
+   - Recognized limitations of accuracy for imbalanced datasets
 
 ### Key Insights
 
-- Multi-task learning introduces unique training dynamics where tasks compete for model capacity, creating challenges in gradient management and optimization.
-   - So important to pay close attention to how training and validation accuracy metrics for both tasks progress over time during training.
-- Task interference can be both beneficial (positive transfer) and detrimental (negative transfer), requiring careful monitoring and mitigation strategies.
-- Different convergence rates between tasks necessitate specialized handling through techniques like gradient normalization, task weighting, or curriculum learning approaches.
-- The currently implemented training loop is a basic starting point and more sophisticated strategies should be adopted based on the training results from the actual task data and performance metrics.
+- Multi-task learning introduces unique training dynamics where tasks compete for model capacity, making careful gradient management and optimization essential.
+   - Monitoring training and validation accuracy for both tasks over time is crucial.
+- Task interference can be both beneficial (positive transfer) and detrimental (negative transfer), necessitating careful monitoring and mitigation.
+- Different convergence rates between tasks call for specialized handling through techniques like gradient normalization, task weighting, or curriculum learning.
+- The current training loop is a basic starting point, and more sophisticated strategies should be adopted based on training outcomes from real data.

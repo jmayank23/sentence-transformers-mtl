@@ -51,27 +51,27 @@ docker run -it jmayank/sentence-transformer-mtl
         
 ## Running the Code
 
-Run the following commands from the project directory. The `-m` flag has been used to make loading of modules easier in each task's code. 
+Once setup is complete using one of the two options above, run the following commands from the project directory. 
 
-_Note: `__init__.py` files were created inside each task directory to make importing models easier._
+_Note: The `-m` flag has been used to make loading of modules easier._
 
 *   **Task 1 (Sentence Transformer):**
 
     ```bash
     python -m src.task1.sentence_transformer
     ```
-    This will download the `bert-base-uncased` model (if not already cached) and print the embeddings for a few example sentences.
+    This will generate sentence embeddings for a few examples and print them.
 
 *   **Task 2 (Multi-Task Model):**
 
     ```bash
     python -m src.task2.sentence_transformer_mtl
     ```
-    This will instantiate the multi-task model and print the shapes and example logits for two tasks.
+    This will instantiate the multi-task model and print the shapes and logits for the two tasks.
 
 *   **Task 4 (Training Loop):**
 
     ```bash
     python -m src.task4.train_mtl
     ```
-     This will train the multi-task model on a dummy dataset for a few epochs and print the loss and accuracy for each task.
+    This will train the multi-task model on a dummy dataset for a few epochs and print the loss and accuracy for the two tasks.

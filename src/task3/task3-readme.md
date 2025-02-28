@@ -5,7 +5,10 @@ There is no code for this task, the training and transfer learning scenarios are
 ---
 
 ## Objectives
-1. **Understand the implications of freezing** different model components (the entire network, only the transformer backbone, or one of the task-specific heads).
+1. **Understand the implications of freezing** different model components
+  - The entire network, on
+  - Only the transformer backbone
+  - Only one of the task-specific heads
 2. **Explore how transfer learning** can be beneficial for multi-task setups, including:
    - Which pretrained model to use,
    - Which layers to freeze or unfreeze,
@@ -22,7 +25,7 @@ There is no code for this task, the training and transfer learning scenarios are
 - **Advantage**: 
   - Relatively lower compute requirement
   - Preserves all pretrained capabilities (no catastrophic forgetting).
-- **Disadvantage**: The model may not adapt to new tasks/domains, so performance on these new tasks may be suboptimal.
+- **Disadvantage**: The model may not adapt to new tasks/domains, so performance on new tasks may be suboptimal.
 
 ### 2. Freezing Only the Transformer Backbone
 - **Use Case**: Adapt a general-purpose model to new tasks with limited data (e.g., sentiment analysis on product reviews).  
@@ -30,17 +33,18 @@ There is no code for this task, the training and transfer learning scenarios are
 - **Advantage**:  
   - Faster training (fewer parameters updated). 
   - Preserves the capabilities of the backbone to capture meaning from underlying input data and allows adaptation of the model to the specific task(s).  
-- **Disadvantage**: If the backbone’s representations are not well-aligned with the new tasks, performance gains may be limited.
-  - For example, consider `bert-base-uncased` being used to analyse (for example, sentiment analysis) transcripts of earnings calls. The frozen backbone may produce embeddings that fail to capture domain-specific nuances. For example, "bullish" in english is associated with bulls or aggression, but in finance it explicitly signals a positive sentiment.
+- **Disadvantage**: 
+  -	Limited Adaptability: If the backbone’s learned representations do not capture the nuances of the new task (e.g., specialized medical terminology), then freezing it may hinder performance improvements.
+  - Potential Misalignment: The task-specific heads might struggle to adapt to features that were not emphasized during pretraining. (e.g., a term like “bullish” may be interpreted differently in a finance context versus general usage).
 
 ### 3. Freezing Only One of the Task-Specific Heads
 - **Use Case**: Preserve performance on Task A (e.g., sentiment analysis) while training Task B (e.g., named entity recognition) and/or the backbone.
 - **Implications**: The transformer backbone and the other task head remain trainable, while one head is kept fixed.  
-    - Backbone frozen: 
-      - _Safe_: Task A’s performance is preserved (representations stay fixed).
+    - Backbone frozen: _Safe_
+      - Task A’s performance is preserved (representations stay fixed).
       - Task B’s head adapts to the frozen backbone’s features.
-    - Backbone unfrozen:
-      - _Risky_: Task A's head may fail due to changes in the underlying representation (drift).
+    - Backbone unfrozen: _Risky_
+      - Task A's head may fail due to changes in the underlying sentence representation.
 - **Advantages**: 
   - Might enable incremental updates (e.g., add Task B without disrupting Task A).
 - **Disadvantages**: 
@@ -49,18 +53,20 @@ There is no code for this task, the training and transfer learning scenarios are
 
 ## Transfer Learning Considerations
 
-In general, if we want to train a model for a specific domain, for example, finance, it can be beneficial to start with a generally capable model and then fine-tune on domain-specific/ proprietary company data. More details on this example below.
+If we want to train a model for a specific domain, for example, finance, it can be beneficial to start with a generally capable model (i.e., a pre-trained model) and then fine-tune on domain-specific/ proprietary data. More details on this example below.
 
 ### 1. Choice of a Pretrained Model
 - **General Domain**: If the tasks are broad (e.g., general classification or sentiment analysis), popular models like `bert-base-uncased` are good starting points.  
 - **Domain-Specific**: For specialized fields such as finance or biomedical text, domain-specific variants (e.g., FinBERT, BioBERT) can be good starting points as they already have some understanding of domain-related terminology and context.
 
 ### 2. Layers to Freeze/Unfreeze
-The choice of layers to freeze/unfreeze depends on the complexity of the task and the amount of data available for fine-tuning.
-- **Partial Freezing**:  
-  - The lower layers are frozen to preserve the general "meaning" that the pretrained models capture.
-  - Upper layers are unfrozen to fine-tune for the specific downstream tasks.  
-- **Progressive Unfreezing**: We can start by unfreezing only the topmost layer, fine-tuning the model and then gradually unfreeze more layers if we continue seeing improvement.  
+The choice of layers to freeze/unfreeze depends on the complexity of the task, amount of data available for fine-tuning and the compute resources that are available. 
+
+- Lower layers: Capture basic syntactic structures and local dependencies
+- Intermediate Layers: Integrate information over longer distances within the sentence, capturing complex patterns and dependencies.
+- Higher layers: Capture high-level semantic information
+
+A good strategy to decide layers to freeze/ unfreeze is to start with freezing only the top-most layer, training on data, monitor results and the progressively decide to unfreeze more layers.
 
 ### 3. Rationale
 - **Data Availability**:  
@@ -91,9 +97,9 @@ Suppose we are trying to adapt a general-purpose BERT to a finance domain:
   - Progressive unfreezing of layers for domain adaptation can be a good strategy
 
 - Transfer Learning Approaches
-  - Recommended using domain-speciifc pretrained models if avaialble and then fine-tune on new task/ data.
+  - Recommended using domain-specifc pretrained models if available and then fine-tune on new task/ data.
 
 ### Key Insights
-- The choice of freezing strategy significantly impacts both performance and computational requirements, with backbone freezing offering the best efficiency-adaptation balance for most scenarios.
-- Transfer learning effectiveness depends on domain similarity between pretraining and target tasks - the closer the domains, the more layers can remain frozen.
-- Component (backbone and task specific heads) interdependence means freezing one component doesn't isolate it from performance changes, as shared representations can continue to evolve through other components.
+- The choice of freezing strategy significantly impacts performance and computational efficiency. For many scenarios, freezing the backbone offers an optimal balance between efficiency and adaptability.
+-	The effectiveness of transfer learning largely depends on the similarity between the pretraining domain and the target domain; closer domains allow for more layers to remain frozen.
+-	Interdependencies between the backbone and task-specific heads mean that changes in one component can affect overall performance. Even when freezing one component, shared representations may evolve if other parts of the network are updated.
